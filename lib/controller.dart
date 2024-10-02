@@ -6,6 +6,9 @@ class HomeController extends GetxController {
   RxList<String> algorithmList = [
     "Caesar",
     "Vigenere",
+    "XOR",
+    "Stream",
+    "Super",
   ].obs;
 
   RxString selectedAlgorithm = "Caesar".obs;
@@ -14,12 +17,23 @@ class HomeController extends GetxController {
     selectedAlgorithm.value = algorithm;
   }
 
-  RxInt numberKey = 3.obs;
-  RxString stringKey = "A".obs;
+  RxInt caesarKey = 3.obs;
+  RxString vigenereKey = 'KEY'.obs;
+  RxInt xorKey = 3.obs;
+  RxList<int> streamKey = <int>[1, 2].obs;
 
-  final Rx<TextEditingController> numberKeyController =
+  void setStreamKeyFromInput(String input) {
+    streamKey.value =
+        input.split(',').map((e) => int.tryParse(e.trim()) ?? 0).toList();
+  }
+
+  final Rx<TextEditingController> caesarKeyController =
       TextEditingController().obs;
-  final Rx<TextEditingController> stringKeyController =
+  final Rx<TextEditingController> vigenereKeyController =
+      TextEditingController().obs;
+  final Rx<TextEditingController> xorKeyController =
+      TextEditingController().obs;
+  final Rx<TextEditingController> streamKeyController =
       TextEditingController().obs;
 
   RxBool isTopPlainText = true.obs;
@@ -73,20 +87,56 @@ class HomeController extends GetxController {
   void updateTextField() {
     if (selectedAlgorithm.value == "Caesar") {
       if (isTopPlainText.value) {
-        cipherText.value = caesarEncrypt(plainText.value, numberKey.value);
+        cipherText.value = caesarEncrypt(plainText.value, caesarKey.value);
         cipherTextController.value.text = cipherText.value;
       } else {
-        plainText.value = caesarEncrypt(cipherText.value, -numberKey.value);
+        plainText.value = caesarEncrypt(cipherText.value, -caesarKey.value);
         plainTextController.value.text = plainText.value;
       }
     } else if (selectedAlgorithm.value == "Vigenere") {
       if (isTopPlainText.value) {
         cipherText.value =
-            vigenereCipher(plainText.value, stringKey.value, true);
+            vigenereCipher(plainText.value, vigenereKey.value, true);
         cipherTextController.value.text = cipherText.value;
       } else {
         plainText.value =
-            vigenereCipher(cipherText.value, stringKey.value, false);
+            vigenereCipher(cipherText.value, vigenereKey.value, false);
+        plainTextController.value.text = plainText.value;
+      }
+    } else if (selectedAlgorithm.value == "XOR") {
+      if (isTopPlainText.value) {
+        cipherText.value = xorCipher(plainText.value, xorKey.value);
+        cipherTextController.value.text = cipherText.value;
+      } else {
+        plainText.value = xorCipher(cipherText.value, xorKey.value);
+        plainTextController.value.text = plainText.value;
+      }
+    } else if (selectedAlgorithm.value == "Stream") {
+      if (isTopPlainText.value) {
+        cipherText.value =
+            streamCipher(plainText.value, List<int>.from(streamKey));
+        cipherTextController.value.text = cipherText.value;
+      } else {
+        plainText.value =
+            streamCipher(cipherText.value, List<int>.from(streamKey));
+        plainTextController.value.text = plainText.value;
+      }
+    } else {
+      if (isTopPlainText.value) {
+        String tempText = plainText.value;
+
+        tempText = caesarEncrypt(tempText, caesarKey.value);
+        tempText = vigenereCipher(tempText, vigenereKey.value, true);
+        tempText = xorCipher(tempText, xorKey.value);
+        cipherText.value = streamCipher(tempText, List<int>.from(streamKey));
+        cipherTextController.value.text = cipherText.value;
+      } else {
+        String tempText = cipherText.value;
+
+        tempText = streamCipher(tempText, List<int>.from(streamKey));
+        tempText = xorCipher(tempText, xorKey.value);
+        tempText = vigenereCipher(tempText, vigenereKey.value, false);
+        plainText.value = caesarEncrypt(tempText, -caesarKey.value);
         plainTextController.value.text = plainText.value;
       }
     }
@@ -110,7 +160,7 @@ class HomeController extends GetxController {
       }
 
       encryptedText += String.fromCharCode(charCode);
-    } 
+    }
 
     return encryptedText;
   }
@@ -137,5 +187,24 @@ class HomeController extends GetxController {
     }
 
     return result;
+  }
+
+  String xorCipher(String text, int key) {
+    return String.fromCharCodes(text.codeUnits.map((unit) => unit ^ key));
+  }
+
+  String streamCipher(String text, List<int> keyStream) {
+    if (text.isEmpty || keyStream.isEmpty) {
+      return text;
+    }
+
+    try {
+      return String.fromCharCodes(text.codeUnits.asMap().entries.map((entry) {
+        int i = entry.key;
+        return entry.value ^ keyStream[i % keyStream.length];
+      }));
+    } catch (e) {
+      return text;
+    }
   }
 }

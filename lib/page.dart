@@ -8,9 +8,11 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final HomeController controller = Get.put(HomeController());
-    controller.numberKeyController.value.text =
-        controller.numberKey.value.toString();
-    controller.stringKeyController.value.text = controller.stringKey.value;
+    controller.caesarKeyController.value.text =
+        controller.caesarKey.value.toString();
+    controller.vigenereKeyController.value.text = controller.vigenereKey.value;
+    controller.xorKeyController.value.text = controller.xorKey.value.toString();
+    controller.streamKeyController.value.text = controller.streamKey.join(', ');
 
     return Placeholder(
       child: Scaffold(
@@ -56,59 +58,8 @@ class HomePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Obx(
-                  () => controller.selectedAlgorithm.value == "Caesar" ||
-                          controller.selectedAlgorithm.value == "Scytale"
-                      ? Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          height: 70,
-                          child: TextField(
-                            controller: controller.numberKeyController.value,
-                            onChanged: (value) {
-                              if (value.isEmpty) {
-                                controller.numberKey.value = 0;
-                              } else {
-                                try {
-                                  controller.numberKey.value = int.parse(value);
-                                } catch (e) {
-                                  controller.numberKey.value = 0;
-                                }
-                              }
-
-                              controller.updateTextField();
-                            },
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 6,
-                              ),
-                              hintText: "Input Key",
-                              hintStyle: TextStyle(
-                                color: Colors.white.withOpacity(0.7),
-                                fontWeight: FontWeight.w300,
-                              ),
-                              enabledBorder: const OutlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: Color(0xff04d9ef),
-                                ),
-                              ),
-                              focusedBorder: const OutlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        )
+                  () => controller.selectedAlgorithm.value == "Super"
+                      ? const SizedBox()
                       : Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 4,
@@ -118,20 +69,68 @@ class HomePage extends StatelessWidget {
                           ),
                           height: 70,
                           child: TextField(
-                            controller: controller.stringKeyController.value,
+                            controller: controller.selectedAlgorithm.value ==
+                                    "Caesar"
+                                ? controller.caesarKeyController.value
+                                : controller.selectedAlgorithm.value ==
+                                        "Vigenere"
+                                    ? controller.vigenereKeyController.value
+                                    : controller.selectedAlgorithm.value ==
+                                            "XOR"
+                                        ? controller.xorKeyController.value
+                                        : controller.streamKeyController.value,
                             onChanged: (value) {
-                              if (value.isEmpty) {
-                                controller.stringKey.value = "0";
-                              } else {
-                                try {
-                                  controller.stringKey.value = value;
-                                } catch (e) {
-                                  controller.stringKey.value = "0";
+                              try {
+                                if (controller.selectedAlgorithm.value ==
+                                    "Caesar") {
+                                  if (value.isEmpty) {
+                                    controller.caesarKey.value = 0;
+                                  } else {
+                                    controller.caesarKey.value =
+                                        int.parse(value);
+                                  }
+                                } else if (controller.selectedAlgorithm.value ==
+                                    "Vigenere") {
+                                  controller.vigenereKey.value =
+                                      value.isEmpty ? "A" : value;
+                                } else if (controller.selectedAlgorithm.value ==
+                                    "XOR") {
+                                  controller.xorKey.value =
+                                      value.isEmpty ? 0 : int.parse(value);
+                                } else if (controller.selectedAlgorithm.value ==
+                                    "Stream") {
+                                  if (value.isEmpty) {
+                                    controller.streamKey.value = [0];
+                                  } else {
+                                    controller.streamKey.value =
+                                        value.split(',').map((e) {
+                                      int? parsedValue = int.tryParse(e.trim());
+                                      if (parsedValue == null) {
+                                        throw Exception('Invalid number');
+                                      }
+                                      return parsedValue;
+                                    }).toList();
+                                  }
                                 }
+                              } catch (e) {
+                                if (controller.selectedAlgorithm.value ==
+                                    "Caesar") {
+                                  controller.caesarKey.value = 0;
+                                } else if (controller.selectedAlgorithm.value ==
+                                    "Vigenere") {
+                                  controller.vigenereKey.value = "A";
+                                } else if (controller.selectedAlgorithm.value ==
+                                    "XOR") {
+                                  controller.xorKey.value = 0;
+                                } else if (controller.selectedAlgorithm.value ==
+                                    "Stream") {
+                                  controller.streamKey.value = [0];
+                                }
+                              } finally {
+                                controller.updateTextField();
                               }
-
-                              controller.updateTextField();
                             },
+                            keyboardType: TextInputType.number,
                             decoration: InputDecoration(
                               contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 16,
